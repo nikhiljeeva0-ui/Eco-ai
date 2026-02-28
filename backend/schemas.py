@@ -37,7 +37,7 @@ class TokenResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class EnergyAnalysisResponse(BaseModel):
-    """Response schema returned by /analyze-energy and /analysis-history."""
+    """Response schema returned by /analysis-history."""
 
     id: int
     timestamp: datetime
@@ -49,6 +49,32 @@ class EnergyAnalysisResponse(BaseModel):
 
     class Config:
         from_attributes = True  # was orm_mode in Pydantic v1
+
+
+class CopilotInsights(BaseModel):
+    """Backend-generated AI Copilot intelligence."""
+
+    risk_level: str
+    sustainability_score: int
+    trend_analysis: str
+    prediction_analysis: str
+    spike_detection: str
+    action_recommendation: str
+    final_message: str
+
+
+class AnalysisWithCopilotResponse(BaseModel):
+    """Enriched response from /analyze-energy including copilot insights."""
+
+    id: int
+    timestamp: datetime
+    total_energy: float
+    total_carbon: float
+    prediction_next_month: float
+    model_accuracy: float
+    sustainability_score: int
+    copilot: CopilotInsights
+    user_id: Optional[int] = None
 
 
 # ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@ from database import Base, engine, get_db
 from ml_model import train_and_predict
 from models import EnergyAnalysis, User
 from schemas import (
+    AnalysisWithCopilotResponse,
     ChangePasswordRequest,
     EnergyAnalysisResponse,
     ProfileResponse,
@@ -34,6 +35,7 @@ from schemas import (
     UserCreate,
     UserLogin,
 )
+from copilot_engine import generate_copilot_insights
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -157,14 +159,14 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 # Energy analysis endpoints (protected)
 # ---------------------------------------------------------------------------
 
-@app.post("/analyze-energy", response_model=EnergyAnalysisResponse)
+@app.post("/analyze-energy", response_model=AnalysisWithCopilotResponse)
 async def analyze_energy(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Upload an energy CSV and receive analysis + AI prediction.
+    Upload an energy CSV and receive analysis + AI prediction + copilot insights.
 
     **Requires authentication** — pass your JWT as a Bearer token.
 
@@ -191,6 +193,7 @@ async def analyze_energy(
     # --- Calculations ---------------------------------------------------
     total_energy = round(float(df["Energy_kWh"].sum()), 2)
     total_carbon = round(total_energy * CARBON_FACTOR, 2)
+    monthly_values = df["Energy_kWh"].tolist()
 
     # --- ML Prediction --------------------------------------------------
     ml_result = train_and_predict(df)
@@ -214,7 +217,40 @@ async def analyze_energy(
             detail=f"Database error: could not save analysis. {exc}",
         )
 
-    return record
+    # --- Fetch previous analysis for trend comparison -------------------
+    previous = (
+        db.query(EnergyAnalysis)
+        .filter(EnergyAnalysis.user_id == current_user.id)
+        .filter(EnergyAnalysis.id != record.id)
+        .order_by(EnergyAnalysis.timestamp.desc())
+        .first()
+    )
+    prev_data = None
+    if previous:
+        prev_data = {"total_carbon": previous.total_carbon}
+
+    # --- Generate copilot insights -------------------------------------
+    current_data = {
+        "total_energy": total_energy,
+        "total_carbon": total_carbon,
+        "prediction_next_month": ml_result["prediction"],
+        "model_accuracy": ml_result["r2_score"],
+        "month_count": len(monthly_values),
+    }
+    copilot = generate_copilot_insights(current_data, prev_data, monthly_values)
+
+    # --- Return enriched response --------------------------------------
+    return AnalysisWithCopilotResponse(
+        id=record.id,
+        timestamp=record.timestamp,
+        total_energy=total_energy,
+        total_carbon=total_carbon,
+        prediction_next_month=ml_result["prediction"],
+        model_accuracy=ml_result["r2_score"],
+        sustainability_score=copilot["sustainability_score"],
+        copilot=copilot,
+        user_id=current_user.id,
+    )
 
 
 # ---------------------------------------------------------------------------

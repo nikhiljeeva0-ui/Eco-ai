@@ -627,11 +627,13 @@ function loadProfile() {
         trendEl.textContent = 'Total energy: ' + data.total_energy.toFixed(0) + ' kWh';
         trendEl.className = 'trend';
 
+        // Emission badge — use backend copilot risk level
         var badge = document.getElementById('emissionBadge');
-        if (badge) {
+        if (badge && data.copilot) {
             badge.style.display = 'inline-block';
-            if (data.total_carbon < 5000) { badge.textContent = '✓ Low Emission'; badge.className = 'emission-badge low'; }
-            else if (data.total_carbon < 15000) { badge.textContent = '⚠ Moderate Emission'; badge.className = 'emission-badge moderate'; }
+            var risk = data.copilot.risk_level;
+            if (risk === 'Low Risk') { badge.textContent = '✓ Low Emission'; badge.className = 'emission-badge low'; }
+            else if (risk === 'Moderate Risk') { badge.textContent = '⚠ Moderate Emission'; badge.className = 'emission-badge moderate'; }
             else { badge.textContent = '✖ High Emission'; badge.className = 'emission-badge high'; }
         }
 
@@ -641,7 +643,8 @@ function loadProfile() {
         var accValue = document.getElementById('accuracyValue');
         if (accDisplay && accValue) { accDisplay.style.display = 'flex'; accValue.textContent = (data.model_accuracy * 100).toFixed(1) + '%'; }
 
-        var score = Math.max(0, Math.min(100, Math.round(100 - (data.total_carbon / 200))));
+        // Sustainability score — use backend value
+        var score = data.sustainability_score || Math.max(0, Math.min(100, Math.round(100 - (data.total_carbon / 200))));
         document.getElementById('sustainabilityScore').textContent = score;
         updateScoreColor(score);
         var labelEl = document.getElementById('scoreLabel');
@@ -656,24 +659,10 @@ function loadProfile() {
         var dlBtn = document.getElementById('downloadReportBtn');
         if (dlBtn && data.id) dlBtn.style.display = 'inline-block';
 
-        // Smart AI Copilot — contextual messages
-        var msgs = [];
-        msgs.push('Energy analysis complete. Predicted next month: ' + data.prediction_next_month.toFixed(0) + ' kWh (accuracy: ' + (data.model_accuracy * 100).toFixed(0) + '%).');
-
-        if (previousAnalysisData) {
-            var carbonDiff = ((data.total_carbon - previousAnalysisData.total_carbon) / previousAnalysisData.total_carbon * 100).toFixed(1);
-            if (carbonDiff < 0) msgs.push('Carbon reduced by ' + Math.abs(carbonDiff) + '% compared to last upload. Great progress!');
-            else if (carbonDiff > 0) msgs.push('Carbon increased by ' + carbonDiff + '% compared to last upload. Review energy patterns.');
+        // AI Copilot — display backend-generated message only
+        if (data.copilot && data.copilot.final_message) {
+            aiSendMessage(data.copilot.final_message);
         }
-
-        if (data.total_carbon > 15000) msgs.push('High emission detected. Consider solar panel offset for peak months.');
-        else if (data.total_carbon > 5000) msgs.push('Moderate emissions. Optimize HVAC schedules during peak hours.');
-        else msgs.push('Emissions within optimal range. Excellent sustainability performance!');
-
-        if (data.prediction_next_month > data.total_energy / 12) msgs.push('Rising energy trend predicted. Review mid-year consumption spikes.');
-
-        previousAnalysisData = data;
-        msgs.forEach(function (m, idx) { setTimeout(function () { aiSendMessage(m); }, idx * 2500); });
 
         // Load history for charts
         authFetch(API_BASE_URL + '/analysis-history')
