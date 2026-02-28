@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSphere Neural – AI Climate Intelligence Engine</title>
+    <meta name="description"
+        content="AI-Powered Climate Intelligence Engine — cinematic intro with 3D Earth visualization.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ═══ AUTH MODAL ═══ -->
+    <div class="auth-overlay" id="authOverlay" style="display:none;">
+        <div class="auth-card">
+            <h2 class="auth-title" id="authTitle">Sign In</h2>
+            <p class="auth-subtitle" id="authSubtitle">Access your climate intelligence dashboard</p>
+            <form id="authForm" onsubmit="return false;">
+                <input type="email" id="authEmail" class="auth-input" placeholder="Email" required
+                    autocomplete="email" />
+                <input type="password" id="authPassword" class="auth-input" placeholder="Password" required
+                    autocomplete="current-password" />
+                <button type="submit" class="auth-submit" id="authSubmit">Sign In</button>
+            </form>
+            <p class="auth-error" id="authError"></p>
+            <p class="auth-toggle">
+                <span id="authToggleText">Don't have an account?</span>
+                <a href="#" id="authToggleLink" onclick="toggleAuthMode(); return false;">Register</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ═══ INTRO SCREEN ═══ -->
+    <div id="introScreen">
+        <button class="skip-btn" id="skipBtn">Skip Intro</button>
+
+        <div class="intro-glow" id="introGlow"></div>
+        <div class="intro-dot" id="introDot"></div>
+        <div class="intro-ripple" id="introRipple"></div>
+
+        <canvas class="intro-canvas" id="introCanvas"></canvas>
+
+        <div class="intro-text" id="introText">
+            <div class="intro-text__main" id="introMain"></div>
+            <div class="intro-text__sub" id="introSub"></div>
+        </div>
+
+        <div class="intro-final" id="introFinal">
+            <h1 class="intro-final__title">EcoSphere <span>Neural</span></h1>
+            <div class="intro-final__status" id="introStatus">Climate System Online</div>
+            <button class="intro-enter-btn" id="enterBtn">Enter Intelligence System</button>
+        </div>
+    </div>
+
+    <!-- ═══ 3D CANVAS ═══ -->
+    <canvas id="earthCanvas"></canvas>
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="main-container" id="mainContainer">
+        <div class="container">
+
+            <section class="hero" id="heroSection">
+                <div class="user-bar" id="userBar" style="display:none;">
+                    <span class="user-bar__email" id="userEmail"></span>
+                    <button class="user-bar__logout" id="logoutBtn" onclick="logoutUser()">Logout</button>
+                </div>
+                <h1 class="hero__title">EcoSphere <span>Neural</span></h1>
+                <p class="hero__subtitle">AI-Powered Climate Intelligence Engine</p>
+                <button class="btn" id="heroAuthBtn">Launch Intelligence System</button>
+            </section>
+
+            <div class="dashboard" id="dashboardGrid">
+
+                <div class="upload-section" id="uploadSection">
+                    <label for="energyFile" class="upload-label">
+                        <span class="upload-icon">⬆</span> Upload Energy CSV
+                    </label>
+                    <input type="file" id="energyFile" accept=".csv" />
+                    <div id="loading" class="loading-indicator" style="display:none;">
+                        <span class="loading-spinner"></span> Analyzing energy data…
+                    </div>
+                    <p class="upload-hint" id="uploadStatus">Upload a CSV with an Energy_kWh column</p>
+                </div>
+
+                <article class="card">
+                    <div class="card__header">
+                        <span class="card__dot"></span>
+                        <h2 class="card__title">Energy Forecast</h2>
+                    </div>
+                    <div class="graph-area">
+                        <svg viewBox="0 0 400 150" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="graphGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="rgba(0,255,178,0.25)" />
+                                    <stop offset="100%" stop-color="rgba(0,255,178,0)" />
+                                </linearGradient>
+                            </defs>
+                            <path class="graph-fill"
+                                d="M0,150 L0,110 C30,105 60,90 100,85 C140,80 170,95 200,75 C230,55 260,60 300,45 C340,30 370,35 400,25 L400,150 Z" />
+                            <path class="graph-line"
+                                d="M0,110 C30,105 60,90 100,85 C140,80 170,95 200,75 C230,55 260,60 300,45 C340,30 370,35 400,25" />
+                        </svg>
+                    </div>
+                    <p class="card__insight" id="energyForecastValue">Projected 8% increase next week.</p>
+                </article>
+
+                <article class="card">
+                    <div class="card__header">
+                        <span class="card__dot"></span>
+                        <h2 class="card__title">Carbon Emission</h2>
+                    </div>
+                    <div style="padding:12px 0 6px">
+                        <div class="big-number" id="carbonValue">78<span class="unit">kg CO₂</span></div>
+                        <div class="trend negative" id="carbonTrend">▲ 3% increase</div>
+                    </div>
+                    <p class="card__insight">Daily emission footprint tracked across all active systems.</p>
+                </article>
+
+                <article class="card">
+                    <div class="card__header">
+                        <span class="card__dot"></span>
+                        <h2 class="card__title">Sustainability Score</h2>
+                    </div>
+                    <div class="score-display">
+                        <span class="score-value" id="sustainabilityScore">82</span>
+                        <span class="score-max"> / 100</span>
+                    </div>
+                    <p class="score-label" id="scoreLabel">Efficient Energy Usage</p>
+                </article>
+
+                <article class="card">
+                    <div class="card__header">
+                        <span class="card__dot"></span>
+                        <h2 class="card__title">Simulation Lab</h2>
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>Reduce Energy (%)</span>
+                            <strong id="energyVal">20</strong>
+                        </div>
+                        <input type="range" id="energySlider" min="0" max="60" value="20">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>Renewable Offset (%)</span>
+                            <strong id="renewVal">30</strong>
+                        </div>
+                        <input type="range" id="renewSlider" min="0" max="80" value="30">
+                    </div>
+                    <div class="sim-results">
+                        <div class="sim-stat">
+                            <div class="sim-stat__label">Updated Carbon</div>
+                            <div class="sim-stat__value" id="simCarbon">64 kg</div>
+                        </div>
+                        <div class="sim-stat">
+                            <div class="sim-stat__label">Updated Score</div>
+                            <div class="sim-stat__value green" id="simScore">91</div>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ AI CLIMATE COPILOT ═══ -->
+    <div class="ai-copilot" id="aiCopilot">
+        <div class="ai-header">
+            <div class="ai-header__icon"></div>
+            <span class="ai-header__title">AI Climate Copilot</span>
+            <span class="ai-header__status" id="aiStatus">Standby</span>
+        </div>
+        <div class="ai-messages" id="aiMessages"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="./script.js"></script>
+
+</body>
+
+</html>
