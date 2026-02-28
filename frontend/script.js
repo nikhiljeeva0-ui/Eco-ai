@@ -94,16 +94,17 @@ function updateAppState() {
     var introScreen = document.getElementById('introScreen');
 
     if (token && email) {
-        // Logged in
+        // Logged in — show app, hide landing
         landingPage.style.display = 'none';
+        mainContainer.style.display = 'flex';
         mainContainer.style.opacity = '1';
         document.getElementById('navUserEmail').textContent = email;
         navigateTo(currentPage);
     } else {
-        // Not logged in — show landing
+        // Not logged in — show landing, hide app
         if (introScreen.style.display !== 'none') return; // intro still running
         landingPage.style.display = 'block';
-        mainContainer.style.opacity = '0';
+        mainContainer.style.display = 'none';
     }
 }
 
@@ -427,6 +428,7 @@ function loadProfile() {
         var exitTl = gsap.timeline({ onComplete: function () { introScreen.style.display = 'none'; updateAppState(); } });
         exitTl.to(introScreen, { opacity: 0, duration: 1.2, ease: 'power2.inOut' }, 0);
         exitTl.call(function () { earthCanvas.classList.add('visible'); }, [], 0.2);
+        exitTl.call(function () { mainContainer.style.display = 'flex'; }, [], 0.5);
         exitTl.to(mainContainer, { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0.6);
         exitTl.to(heroSection, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.9);
         var cards = document.querySelectorAll('.card');
