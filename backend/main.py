@@ -1,10 +1,9 @@
 """
 EcoSphere Neural — FastAPI Backend
 ====================================
-Production-ready multi-user API with JWT authentication.
-Accepts energy CSV uploads, calculates carbon emissions,
-returns AI predictions, and persists results per user
-in PostgreSQL.
+Production-ready multi-user SaaS API v4.0.0.
+JWT authentication, energy analysis, ML prediction,
+PDF sustainability reports, and PostgreSQL persistence.
 
 Run with:
     uvicorn main:app --reload
@@ -13,12 +12,14 @@ Interactive docs:
     http://127.0.0.1:8000/docs
 """
 
-from io import StringIO
+import os
+from io import BytesIO, StringIO
 from typing import List
 
 import pandas as pd
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from auth import create_access_token, get_current_user, hash_password, verify_password
@@ -38,14 +39,25 @@ from schemas import (
 
 app = FastAPI(
     title="EcoSphere Neural API",
-    description="AI-Powered Climate Intelligence Engine — Multi-User SaaS Backend",
-    version="3.0.0",
+    description="AI-Powered Climate Intelligence Engine — Pilot-Ready SaaS Backend",
+    version="4.0.0",
 )
 
-# Allow frontend to call this API from any origin during development
+# ---------------------------------------------------------------------------
+# CORS — production-restricted
+# ---------------------------------------------------------------------------
+
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:8080"
+).split(",")
+
+# Always allow the Render frontend
+ALLOWED_ORIGINS.append("https://eco-ai-1.onrender.com")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,6 +65,26 @@ app.add_middleware(
 
 # Carbon emission factor: kg CO₂ per kWh
 CARBON_FACTOR = 0.82
+
+
+# ---------------------------------------------------------------------------
+# Global exception handler — clean JSON errors
+# ---------------------------------------------------------------------------
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error. Please try again later."},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +104,7 @@ def on_startup():
 @app.get("/")
 def health_check():
     """Health-check endpoint — confirms the backend is running."""
-    return {"status": "EcoSphere Neural Backend Running", "version": "3.0.0"}
+    return {"status": "EcoSphere Neural Backend Running", "version": "4.0.0"}
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +118,6 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
     Accepts email and password. Returns success message.
     """
-    # Check if email already exists
     existing = db.query(User).filter(User.email == user_data.email).first()
     if existing:
         raise HTTPException(
@@ -94,7 +125,6 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered.",
         )
 
-    # Create user with hashed password
     new_user = User(
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
@@ -140,9 +170,6 @@ async def analyze_energy(
     **Requires authentication** — pass your JWT as a Bearer token.
 
     The CSV must contain an **Energy_kWh** column.
-    Rows should be in chronological order (one per month).
-
-    Results are saved to the database linked to your account.
     """
     # --- Read the uploaded file -----------------------------------------
     try:
@@ -188,7 +215,6 @@ async def analyze_energy(
             detail=f"Database error: could not save analysis. {exc}",
         )
 
-    # --- Response -------------------------------------------------------
     return record
 
 
@@ -216,3 +242,122 @@ def analysis_history(
             detail=f"Database error: could not retrieve history. {exc}",
         )
     return records
+
+
+# ---------------------------------------------------------------------------
+# PDF Sustainability Report (protected)
+# ---------------------------------------------------------------------------
+
+@app.get("/generate-report/{analysis_id}")
+def generate_report(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate a downloadable PDF sustainability report for a specific analysis.
+
+    **Requires authentication** — pass your JWT as a Bearer token.
+    """
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    # Fetch analysis record (must belong to current user)
+    record = (
+        db.query(EnergyAnalysis)
+        .filter(EnergyAnalysis.id == analysis_id, EnergyAnalysis.user_id == current_user.id)
+        .first()
+    )
+    if not record:
+        raise HTTPException(status_code=404, detail="Analysis record not found.")
+
+    # Calculate sustainability score
+    sustainability_score = max(0, min(100, round(100 - (record.total_carbon / 200), 1)))
+
+    # Emission level
+    if record.total_carbon < 5000:
+        emission_level = "Low Emission"
+    elif record.total_carbon < 15000:
+        emission_level = "Moderate Emission"
+    else:
+        emission_level = "High Emission"
+
+    # Build PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50)
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        "CustomTitle", parent=styles["Title"],
+        fontSize=24, textColor=colors.HexColor("#00b27a"),
+        spaceAfter=8,
+    )
+    subtitle_style = ParagraphStyle(
+        "Subtitle", parent=styles["Normal"],
+        fontSize=12, textColor=colors.grey, spaceAfter=30,
+    )
+    section_style = ParagraphStyle(
+        "Section", parent=styles["Heading2"],
+        fontSize=14, textColor=colors.HexColor("#1a1a2e"),
+        spaceBefore=20, spaceAfter=10,
+    )
+
+    elements = []
+
+    # Header
+    elements.append(Paragraph("EcoSphere Neural", title_style))
+    elements.append(Paragraph("AI-Powered Sustainability Report", subtitle_style))
+    elements.append(Spacer(1, 12))
+
+    # Info section
+    elements.append(Paragraph("Analysis Summary", section_style))
+
+    ts = record.timestamp.strftime("%B %d, %Y at %I:%M %p") if record.timestamp else "N/A"
+
+    data = [
+        ["Metric", "Value"],
+        ["Report Date", ts],
+        ["Total Energy Consumed", f"{record.total_energy:,.2f} kWh"],
+        ["Carbon Emission", f"{record.total_carbon:,.2f} kg CO₂"],
+        ["Next Month Prediction", f"{record.prediction_next_month:,.2f} kWh"],
+        ["Model Accuracy (R²)", f"{record.model_accuracy * 100:.1f}%"],
+        ["Sustainability Score", f"{sustainability_score} / 100"],
+        ["Emission Level", emission_level],
+        ["User", current_user.email],
+    ]
+
+    table = Table(data, colWidths=[220, 260])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#00b27a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+        ("TOPPADDING", (0, 0), (-1, 0), 10),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#f0fdf4")),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
+        ("FONTSIZE", (0, 1), (-1, -1), 11),
+        ("TOPPADDING", (0, 1), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 30))
+
+    # Footer
+    elements.append(Paragraph(
+        "Generated by EcoSphere Neural AI Climate Intelligence Engine",
+        ParagraphStyle("Footer", parent=styles["Normal"], fontSize=9, textColor=colors.grey),
+    ))
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"EcoSphere_Report_{analysis_id}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

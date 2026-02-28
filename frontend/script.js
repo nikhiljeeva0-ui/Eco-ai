@@ -29,6 +29,46 @@ function logoutUser() {
     updateAuthUI();
 }
 
+var lastAnalysisId = null;
+
+function downloadReport() {
+    if (!lastAnalysisId) return;
+    var token = localStorage.getItem('access_token');
+    if (!token) {
+        document.getElementById('authOverlay').style.display = 'flex';
+        return;
+    }
+    // Fetch PDF with auth header and trigger download
+    fetch(API_BASE_URL + '/generate-report/' + lastAnalysisId, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+        .then(function (response) {
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user_email');
+                updateAuthUI();
+                document.getElementById('authOverlay').style.display = 'flex';
+                return;
+            }
+            if (!response.ok) throw new Error('Failed to generate report');
+            return response.blob();
+        })
+        .then(function (blob) {
+            if (!blob) return;
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'EcoSphere_Report_' + lastAnalysisId + '.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(function (err) {
+            console.error('Report download error:', err);
+        });
+}
+
 function updateAuthUI() {
     var token = localStorage.getItem('access_token');
     var email = localStorage.getItem('user_email');
@@ -596,6 +636,9 @@ function updateAuthUI() {
     function updateDashboard(data) {
         lastBackendData = data;
 
+        // Track analysis ID for PDF download
+        if (data.id) lastAnalysisId = data.id;
+
         // Carbon card
         var carbonEl = document.getElementById('carbonValue');
         carbonEl.innerHTML = data.total_carbon.toFixed(2) + '<span class="unit">kg CO\u2082</span>';
@@ -603,9 +646,33 @@ function updateAuthUI() {
         trendEl.textContent = 'Total energy: ' + data.total_energy.toFixed(0) + ' kWh';
         trendEl.className = 'trend';
 
+        // Emission badge
+        var badge = document.getElementById('emissionBadge');
+        if (badge) {
+            badge.style.display = 'inline-block';
+            if (data.total_carbon < 5000) {
+                badge.textContent = '✓ Low Emission';
+                badge.className = 'emission-badge low';
+            } else if (data.total_carbon < 15000) {
+                badge.textContent = '⚠ Moderate Emission';
+                badge.className = 'emission-badge moderate';
+            } else {
+                badge.textContent = '✖ High Emission';
+                badge.className = 'emission-badge high';
+            }
+        }
+
         // Energy forecast card
         var forecastEl = document.getElementById('energyForecastValue');
-        forecastEl.textContent = 'Predicted next month: ' + data.prediction_next_month.toFixed(2) + ' kWh (accuracy ' + (data.model_accuracy * 100).toFixed(0) + '%)';
+        forecastEl.textContent = 'Predicted next month: ' + data.prediction_next_month.toFixed(2) + ' kWh';
+
+        // Model accuracy display
+        var accDisplay = document.getElementById('accuracyDisplay');
+        var accValue = document.getElementById('accuracyValue');
+        if (accDisplay && accValue) {
+            accDisplay.style.display = 'flex';
+            accValue.textContent = (data.model_accuracy * 100).toFixed(1) + '%';
+        }
 
         // Sustainability score
         var score = 100 - (data.total_carbon / 200);
@@ -630,6 +697,10 @@ function updateAuthUI() {
 
         // Earth glow
         updateEarthGlow(data.total_carbon);
+
+        // Show download report button
+        var dlBtn = document.getElementById('downloadReportBtn');
+        if (dlBtn && data.id) dlBtn.style.display = 'inline-block';
 
         // AI Copilot insight
         aiSendMessage(

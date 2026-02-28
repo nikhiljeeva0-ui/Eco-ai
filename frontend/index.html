@@ -85,6 +85,10 @@
                         <span class="loading-spinner"></span> Analyzing energy data…
                     </div>
                     <p class="upload-hint" id="uploadStatus">Upload a CSV with an Energy_kWh column</p>
+                    <button class="download-report-btn" id="downloadReportBtn" style="display:none;"
+                        onclick="downloadReport()">
+                        📄 Download Sustainability Report
+                    </button>
                 </div>
 
                 <article class="card">
@@ -107,6 +111,10 @@
                         </svg>
                     </div>
                     <p class="card__insight" id="energyForecastValue">Projected 8% increase next week.</p>
+                    <div class="accuracy-display" id="accuracyDisplay" style="display:none;">
+                        <span class="accuracy-label">Model Accuracy</span>
+                        <span class="accuracy-value" id="accuracyValue">—</span>
+                    </div>
                 </article>
 
                 <article class="card">
@@ -119,6 +127,7 @@
                         <div class="trend negative" id="carbonTrend">▲ 3% increase</div>
                     </div>
                     <p class="card__insight">Daily emission footprint tracked across all active systems.</p>
+                    <div class="emission-badge" id="emissionBadge" style="display:none;">—</div>
                 </article>
 
                 <article class="card">
