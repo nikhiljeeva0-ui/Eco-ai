@@ -356,32 +356,38 @@ def generate_report(
     if not record:
         raise HTTPException(status_code=404, detail="Analysis record not found.")
 
-    # Calculate sustainability score
-    sustainability_score = max(0, min(100, round(100 - (record.total_carbon / 200), 1)))
+    # Fetch previous analysis for trend tracking
+    previous = (
+        db.query(EnergyAnalysis)
+        .filter(EnergyAnalysis.user_id == current_user.id)
+        .filter(EnergyAnalysis.id != record.id)
+        .filter(EnergyAnalysis.timestamp < record.timestamp)
+        .order_by(EnergyAnalysis.timestamp.desc())
+        .first()
+    )
+    prev_data = None
+    if previous:
+        prev_data = {"total_carbon": previous.total_carbon}
 
-    # Emission level
-    if record.total_carbon < 5000:
-        emission_level = "Low Emission"
-    elif record.total_carbon < 15000:
-        emission_level = "Moderate Emission"
-    else:
-        emission_level = "High Emission"
+    # Generate insights using the copilot engine for consistency
+    current_data = {
+        "total_energy": record.total_energy,
+        "total_carbon": record.total_carbon,
+        "prediction_next_month": record.prediction_next_month,
+        "model_accuracy": record.model_accuracy,
+        "month_count": 12, # Assume 12 for summary report if raw data not stored
+    }
+    
+    # We don't have monthly_values stored in DB, so spike detection will be skipped in PDF
+    copilot = generate_copilot_insights(current_data, prev_data)
+    
+    sustainability_score = copilot["sustainability_score"]
+    emission_level = copilot["risk_level"]
+    final_message = copilot["final_message"]
 
-    # AI Recommendations based on data
-    recommendations = []
-    if record.total_carbon > 15000:
-        recommendations.append("High carbon footprint detected. Consider renewable energy sources.")
-    elif record.total_carbon > 5000:
-        recommendations.append("Moderate emissions. Optimize peak-hour energy consumption.")
-    else:
-        recommendations.append("Emissions within optimal range. Maintain current practices.")
+    # Recommendations (extract from copilot logic)
+    recommendations = copilot["action_recommendation"].replace("💡 Recommendations: ", "").split(" | ")
 
-    if record.prediction_next_month > record.total_energy / max(1, 12):
-        recommendations.append("Rising energy trend predicted. Review HVAC and lighting schedules.")
-    else:
-        recommendations.append("Energy usage trending downward. Continue monitoring.")
-
-    recommendations.append("Consider solar panel offset for peak consumption months.")
 
     # Build PDF
     buffer = BytesIO()
@@ -458,8 +464,12 @@ def generate_report(
 
     # AI Recommendations section
     elements.append(Paragraph("AI Recommendations", section_style))
-    for i, rec in enumerate(recommendations, 1):
-        elements.append(Paragraph(f"{i}. {rec}", body_style))
+    for rec in recommendations:
+        elements.append(Paragraph(f"• {rec}", body_style))
+    
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("Copilot Intelligence Summary", section_style))
+    elements.append(Paragraph(final_message, body_style))
     elements.append(Spacer(1, 24))
 
     # Footer
