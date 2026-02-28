@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoSphere Neural – AI Climate Intelligence Engine</title>
     <meta name="description"
-        content="AI-Powered Climate Intelligence Engine — cinematic intro with 3D Earth visualization.">
+        content="AI-Powered Climate Intelligence Engine for Smart Campuses — energy forecasting, carbon tracking, and sustainability insights.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -60,121 +62,348 @@
     <!-- ═══ 3D CANVAS ═══ -->
     <canvas id="earthCanvas"></canvas>
 
-    <!-- ═══ DASHBOARD ═══ -->
+    <!-- ═══ LANDING PAGE ═══ -->
+    <div class="landing-page" id="landingPage" style="display:none;">
+        <nav class="landing-nav">
+            <div class="landing-nav__brand">🌍 EcoSphere <span>Neural</span></div>
+            <div class="landing-nav__actions">
+                <button class="btn btn--outline" onclick="showAuth('login')">Login</button>
+                <button class="btn btn--primary" onclick="showAuth('register')">Register</button>
+            </div>
+        </nav>
+
+        <section class="landing-hero">
+            <div class="pilot-badge">🧪 Pilot Version 1.0</div>
+            <h1 class="landing-hero__title">AI Climate Intelligence<br>for <span class="gradient-text">Smart
+                    Campuses</span></h1>
+            <p class="landing-hero__desc">Transform your campus energy data into actionable sustainability insights. Our
+                AI engine predicts energy consumption, tracks carbon emissions, and delivers intelligent recommendations
+                — all from a single CSV upload.</p>
+            <div class="landing-hero__cta">
+                <button class="btn btn--primary btn--lg" onclick="showAuth('register')">Get Started Free</button>
+                <button class="btn btn--outline btn--lg" onclick="showAuth('login')">Sign In</button>
+            </div>
+        </section>
+
+        <section class="landing-features" id="features">
+            <h2 class="section-title">Platform Capabilities</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-card__icon">⚡</div>
+                    <h3 class="feature-card__title">Energy Forecasting</h3>
+                    <p class="feature-card__desc">ML-powered prediction of next month's energy consumption using Linear
+                        Regression trained on your historical data.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">🌿</div>
+                    <h3 class="feature-card__title">Carbon Tracking</h3>
+                    <p class="feature-card__desc">Automatic CO₂ emission calculation with color-coded severity badges
+                        and sustainability scoring.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">🤖</div>
+                    <h3 class="feature-card__title">AI Insights</h3>
+                    <p class="feature-card__desc">Context-aware recommendations powered by analysis of your energy
+                        trends, patterns, and prediction accuracy.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">📊</div>
+                    <h3 class="feature-card__title">Analytics Dashboard</h3>
+                    <p class="feature-card__desc">Interactive charts for energy trends, carbon distribution, and
+                        prediction comparison visualization.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">📄</div>
+                    <h3 class="feature-card__title">PDF Reports</h3>
+                    <p class="feature-card__desc">Generate professional sustainability reports with AI recommendations,
+                        ready for stakeholder presentations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">🔒</div>
+                    <h3 class="feature-card__title">Secure Multi-User</h3>
+                    <p class="feature-card__desc">JWT-authenticated accounts with isolated data, analysis history, and
+                        secure password management.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-credibility">
+            <div class="credibility-badge">🏛️ Built for Engineering Institutions</div>
+            <p class="credibility-text">Designed specifically for campus sustainability programs. Deploy in minutes,
+                gather real insights immediately.</p>
+        </section>
+
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-brand">🌍 EcoSphere Neural · Pilot v1.0</div>
+                <div class="footer-links">
+                    <a href="#" onclick="return false;">About</a>
+                    <a href="#" onclick="return false;">Privacy Policy</a>
+                    <a href="mailto:contact@ecosphere.ai">Contact</a>
+                </div>
+                <div class="footer-copy">© 2026 EcoSphere Neural. AI Climate Intelligence Engine.</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ═══ MAIN APP (post-login) ═══ -->
     <div class="main-container" id="mainContainer">
+
+        <!-- ═══ NAVIGATION BAR ═══ -->
+        <nav class="app-nav" id="appNav">
+            <div class="app-nav__brand">🌍 EcoSphere <span>Neural</span></div>
+            <button class="app-nav__hamburger" id="navHamburger" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="app-nav__links" id="navLinks">
+                <a href="#" class="nav-link active" data-page="dashboard"
+                    onclick="navigateTo('dashboard'); return false;">Dashboard</a>
+                <a href="#" class="nav-link" data-page="history"
+                    onclick="navigateTo('history'); return false;">History</a>
+                <a href="#" class="nav-link" data-page="profile"
+                    onclick="navigateTo('profile'); return false;">Profile</a>
+                <button class="nav-link nav-link--logout" onclick="logoutUser()">Logout</button>
+            </div>
+            <div class="app-nav__user" id="navUser">
+                <span class="app-nav__email" id="navUserEmail"></span>
+                <div class="pilot-badge pilot-badge--small">Pilot v1.0</div>
+            </div>
+        </nav>
+
         <div class="container">
 
-            <section class="hero" id="heroSection">
-                <div class="user-bar" id="userBar" style="display:none;">
-                    <span class="user-bar__email" id="userEmail"></span>
-                    <button class="user-bar__logout" id="logoutBtn" onclick="logoutUser()">Logout</button>
+            <!-- ═══ DASHBOARD PAGE ═══ -->
+            <div class="page" id="pageDashboard">
+
+                <section class="hero" id="heroSection">
+                    <h1 class="hero__title">EcoSphere <span>Neural</span></h1>
+                    <p class="hero__subtitle">AI-Powered Climate Intelligence Engine</p>
+                </section>
+
+                <div class="dashboard" id="dashboardGrid">
+
+                    <div class="upload-section" id="uploadSection">
+                        <label for="energyFile" class="upload-label">
+                            <span class="upload-icon">⬆</span> Upload Energy CSV
+                        </label>
+                        <input type="file" id="energyFile" accept=".csv" />
+                        <div id="loading" class="loading-indicator" style="display:none;">
+                            <span class="loading-spinner"></span> Analyzing energy data…
+                        </div>
+                        <p class="upload-hint" id="uploadStatus">Upload a CSV with an Energy_kWh column</p>
+                        <button class="download-report-btn" id="downloadReportBtn" style="display:none"
+                            onclick="downloadReport()">
+                            📄 Download Sustainability Report
+                        </button>
+                    </div>
+
+                    <article class="card">
+                        <div class="card__header">
+                            <span class="card__dot"></span>
+                            <h2 class="card__title">Energy Forecast</h2>
+                        </div>
+                        <div class="graph-area">
+                            <svg viewBox="0 0 400 150" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="graphGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="rgba(0,255,178,0.25)" />
+                                        <stop offset="100%" stop-color="rgba(0,255,178,0)" />
+                                    </linearGradient>
+                                </defs>
+                                <path class="graph-fill"
+                                    d="M0,150 L0,110 C30,105 60,90 100,85 C140,80 170,95 200,75 C230,55 260,60 300,45 C340,30 370,35 400,25 L400,150 Z" />
+                                <path class="graph-line"
+                                    d="M0,110 C30,105 60,90 100,85 C140,80 170,95 200,75 C230,55 260,60 300,45 C340,30 370,35 400,25" />
+                            </svg>
+                        </div>
+                        <p class="card__insight" id="energyForecastValue">Projected 8% increase next week.</p>
+                        <div class="accuracy-display" id="accuracyDisplay" style="display:none;">
+                            <span class="accuracy-label">Model Accuracy</span>
+                            <span class="accuracy-value" id="accuracyValue">—</span>
+                        </div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card__header">
+                            <span class="card__dot"></span>
+                            <h2 class="card__title">Carbon Emission</h2>
+                        </div>
+                        <div style="padding:12px 0 6px">
+                            <div class="big-number" id="carbonValue">78<span class="unit">kg CO₂</span></div>
+                            <div class="trend negative" id="carbonTrend">▲ 3% increase</div>
+                        </div>
+                        <p class="card__insight">Daily emission footprint tracked across all active systems.</p>
+                        <div class="emission-badge" id="emissionBadge" style="display:none;">—</div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card__header">
+                            <span class="card__dot"></span>
+                            <h2 class="card__title">Sustainability Score</h2>
+                        </div>
+                        <div class="score-display">
+                            <span class="score-value" id="sustainabilityScore">82</span>
+                            <span class="score-max"> / 100</span>
+                        </div>
+                        <div class="score-indicator" id="scoreIndicator"></div>
+                        <p class="score-label" id="scoreLabel">Efficient Energy Usage</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card__header">
+                            <span class="card__dot"></span>
+                            <h2 class="card__title">Simulation Lab</h2>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Reduce Energy (%)</span>
+                                <strong id="energyVal">20</strong>
+                            </div>
+                            <input type="range" id="energySlider" min="0" max="60" value="20">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Renewable Offset (%)</span>
+                                <strong id="renewVal">30</strong>
+                            </div>
+                            <input type="range" id="renewSlider" min="0" max="80" value="30">
+                        </div>
+                        <div class="sim-results">
+                            <div class="sim-stat">
+                                <div class="sim-stat__label">Updated Carbon</div>
+                                <div class="sim-stat__value" id="simCarbon">64 kg</div>
+                            </div>
+                            <div class="sim-stat">
+                                <div class="sim-stat__label">Updated Score</div>
+                                <div class="sim-stat__value green" id="simScore">91</div>
+                            </div>
+                        </div>
+                    </article>
+
                 </div>
-                <h1 class="hero__title">EcoSphere <span>Neural</span></h1>
-                <p class="hero__subtitle">AI-Powered Climate Intelligence Engine</p>
-                <button class="btn" id="heroAuthBtn">Launch Intelligence System</button>
-            </section>
 
-            <div class="dashboard" id="dashboardGrid">
-
-                <div class="upload-section" id="uploadSection">
-                    <label for="energyFile" class="upload-label">
-                        <span class="upload-icon">⬆</span> Upload Energy CSV
-                    </label>
-                    <input type="file" id="energyFile" accept=".csv" />
-                    <div id="loading" class="loading-indicator" style="display:none;">
-                        <span class="loading-spinner"></span> Analyzing energy data…
-                    </div>
-                    <p class="upload-hint" id="uploadStatus">Upload a CSV with an Energy_kWh column</p>
-                    <button class="download-report-btn" id="downloadReportBtn" style="display:none;"
-                        onclick="downloadReport()">
-                        📄 Download Sustainability Report
-                    </button>
-                </div>
-
-                <article class="card">
-                    <div class="card__header">
-                        <span class="card__dot"></span>
-                        <h2 class="card__title">Energy Forecast</h2>
-                    </div>
-                    <div class="graph-area">
-                        <svg viewBox="0 0 400 150" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="graphGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="rgba(0,255,178,0.25)" />
-                                    <stop offset="100%" stop-color="rgba(0,255,178,0)" />
-                                </linearGradient>
-                            </defs>
-                            <path class="graph-fill"
-                                d="M0,150 L0,110 C30,105 60,90 100,85 C140,80 170,95 200,75 C230,55 260,60 300,45 C340,30 370,35 400,25 L400,150 Z" />
-                            <path class="graph-line"
-                                d="M0,110 C30,105 60,90 100,85 C140,80 170,95 200,75 C230,55 260,60 300,45 C340,30 370,35 400,25" />
-                        </svg>
-                    </div>
-                    <p class="card__insight" id="energyForecastValue">Projected 8% increase next week.</p>
-                    <div class="accuracy-display" id="accuracyDisplay" style="display:none;">
-                        <span class="accuracy-label">Model Accuracy</span>
-                        <span class="accuracy-value" id="accuracyValue">—</span>
-                    </div>
-                </article>
-
-                <article class="card">
-                    <div class="card__header">
-                        <span class="card__dot"></span>
-                        <h2 class="card__title">Carbon Emission</h2>
-                    </div>
-                    <div style="padding:12px 0 6px">
-                        <div class="big-number" id="carbonValue">78<span class="unit">kg CO₂</span></div>
-                        <div class="trend negative" id="carbonTrend">▲ 3% increase</div>
-                    </div>
-                    <p class="card__insight">Daily emission footprint tracked across all active systems.</p>
-                    <div class="emission-badge" id="emissionBadge" style="display:none;">—</div>
-                </article>
-
-                <article class="card">
-                    <div class="card__header">
-                        <span class="card__dot"></span>
-                        <h2 class="card__title">Sustainability Score</h2>
-                    </div>
-                    <div class="score-display">
-                        <span class="score-value" id="sustainabilityScore">82</span>
-                        <span class="score-max"> / 100</span>
-                    </div>
-                    <p class="score-label" id="scoreLabel">Efficient Energy Usage</p>
-                </article>
-
-                <article class="card">
-                    <div class="card__header">
-                        <span class="card__dot"></span>
-                        <h2 class="card__title">Simulation Lab</h2>
-                    </div>
-                    <div class="slider-group">
-                        <div class="slider-label">
-                            <span>Reduce Energy (%)</span>
-                            <strong id="energyVal">20</strong>
+                <!-- ═══ ANALYTICS CHARTS ═══ -->
+                <section class="analytics-section" id="analyticsSection" style="display:none;">
+                    <h2 class="section-title">Analytics Overview</h2>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3 class="chart-card__title">Energy Trend</h3>
+                            <canvas id="energyTrendChart"></canvas>
                         </div>
-                        <input type="range" id="energySlider" min="0" max="60" value="20">
-                    </div>
-                    <div class="slider-group">
-                        <div class="slider-label">
-                            <span>Renewable Offset (%)</span>
-                            <strong id="renewVal">30</strong>
+                        <div class="chart-card">
+                            <h3 class="chart-card__title">Carbon Distribution</h3>
+                            <canvas id="carbonBarChart"></canvas>
                         </div>
-                        <input type="range" id="renewSlider" min="0" max="80" value="30">
-                    </div>
-                    <div class="sim-results">
-                        <div class="sim-stat">
-                            <div class="sim-stat__label">Updated Carbon</div>
-                            <div class="sim-stat__value" id="simCarbon">64 kg</div>
-                        </div>
-                        <div class="sim-stat">
-                            <div class="sim-stat__label">Updated Score</div>
-                            <div class="sim-stat__value green" id="simScore">91</div>
+                        <div class="chart-card">
+                            <h3 class="chart-card__title">Actual vs Predicted</h3>
+                            <canvas id="predictionChart"></canvas>
                         </div>
                     </div>
-                </article>
+                </section>
 
             </div>
+
+            <!-- ═══ HISTORY PAGE ═══ -->
+            <div class="page" id="pageHistory" style="display:none;">
+                <section class="page-header">
+                    <h1 class="page-header__title">Analysis History</h1>
+                    <p class="page-header__desc">Your last 10 energy analyses, sorted by date.</p>
+                </section>
+
+                <div class="history-loading" id="historyLoading" style="display:none;">
+                    <span class="loading-spinner"></span> Loading history…
+                </div>
+
+                <div class="history-table-wrap" id="historyTableWrap">
+                    <table class="history-table" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortHistory('timestamp')">Date ↕</th>
+                                <th onclick="sortHistory('total_energy')">Energy (kWh) ↕</th>
+                                <th onclick="sortHistory('total_carbon')">Carbon (kg CO₂) ↕</th>
+                                <th onclick="sortHistory('prediction_next_month')">Prediction ↕</th>
+                                <th onclick="sortHistory('model_accuracy')">Accuracy ↕</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                        </tbody>
+                    </table>
+                    <p class="history-empty" id="historyEmpty" style="display:none;">No analyses yet. Upload a CSV to
+                        get started.</p>
+                </div>
+
+                <!-- Detail modal -->
+                <div class="detail-overlay" id="detailOverlay" style="display:none;" onclick="closeDetail(event)">
+                    <div class="detail-card" id="detailCard">
+                        <button class="detail-close"
+                            onclick="document.getElementById('detailOverlay').style.display='none'">✕</button>
+                        <h2 class="detail-card__title">Analysis Detail</h2>
+                        <div id="detailContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ PROFILE PAGE ═══ -->
+            <div class="page" id="pageProfile" style="display:none;">
+                <section class="page-header">
+                    <h1 class="page-header__title">Your Profile</h1>
+                    <p class="page-header__desc">Account details and settings.</p>
+                </section>
+
+                <div class="profile-grid">
+                    <div class="profile-card">
+                        <h3 class="profile-card__title">Account Information</h3>
+                        <div class="profile-info">
+                            <div class="profile-info__row">
+                                <span class="profile-info__label">Email</span>
+                                <span class="profile-info__value" id="profileEmail">—</span>
+                            </div>
+                            <div class="profile-info__row">
+                                <span class="profile-info__label">Member Since</span>
+                                <span class="profile-info__value" id="profileCreated">—</span>
+                            </div>
+                            <div class="profile-info__row">
+                                <span class="profile-info__label">Total Analyses</span>
+                                <span class="profile-info__value" id="profileAnalyses">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-card">
+                        <h3 class="profile-card__title">Change Password</h3>
+                        <form id="changePasswordForm" onsubmit="return false;">
+                            <input type="password" class="auth-input" id="oldPassword" placeholder="Current Password"
+                                required />
+                            <input type="password" class="auth-input" id="newPassword"
+                                placeholder="New Password (min 6 chars)" required minlength="6" />
+                            <button type="submit" class="btn btn--primary" id="changePassBtn">Update Password</button>
+                        </form>
+                        <p class="profile-msg" id="changePassMsg"></p>
+                    </div>
+
+                    <div class="profile-card">
+                        <h3 class="profile-card__title">Session</h3>
+                        <p class="profile-info__desc">Your session expires after 60 minutes of inactivity.</p>
+                        <button class="btn btn--danger" onclick="logoutUser()">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+        <!-- ═══ FOOTER ═══ -->
+        <footer class="site-footer" id="appFooter">
+            <div class="footer-content">
+                <div class="footer-brand">🌍 EcoSphere Neural · Pilot v1.0</div>
+                <div class="footer-links">
+                    <a href="#" onclick="return false;">About</a>
+                    <a href="#" onclick="return false;">Privacy Policy</a>
+                    <a href="mailto:contact@ecosphere.ai">Contact</a>
+                </div>
+                <div class="footer-copy">© 2026 EcoSphere Neural. AI Climate Intelligence Engine.</div>
+            </div>
+        </footer>
     </div>
 
     <!-- ═══ AI CLIMATE COPILOT ═══ -->
@@ -189,6 +418,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="./script.js"></script>
 
 </body>

@@ -49,3 +49,20 @@ class EnergyAnalysisResponse(BaseModel):
 
     class Config:
         from_attributes = True  # was orm_mode in Pydantic v1
+
+
+# ---------------------------------------------------------------------------
+# Profile schemas
+# ---------------------------------------------------------------------------
+
+class ProfileResponse(BaseModel):
+    """User profile information."""
+    email: str
+    created_at: datetime
+    analysis_count: int
+
+
+class ChangePasswordRequest(BaseModel):
+    """Change password request body."""
+    old_password: str
+    new_password: str
